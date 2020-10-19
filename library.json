@@ -1,0 +1,20 @@
+{
+    "name": "esp32plus",
+    "version": "0.0.1",
+    "keywords": "",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/djanku/esp32plus.git"
+    },
+    "authors": [
+        {
+            "name": "Dominik Janků",
+            "email": "djanku@email.cz",
+            "url": "http://djanku.cz"
+        }
+    ],
+    "license": "MIT",
+    "homepage": "https://github.com/djanku/esp32plus",
+    "plarforms": "espressif32",
+    "frameworks": "espressif32"
+}
