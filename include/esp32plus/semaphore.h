@@ -9,8 +9,8 @@ class Semaphore {
     public:
         ~Semaphore();
 
-        IRAM_ATTR bool take(TickType_t ticks_to_wait = 0);
-        IRAM_ATTR bool give();
+        IRAM_ATTR BaseType_t take(TickType_t ticks_to_wait = 0);
+        IRAM_ATTR BaseType_t give();
 
     protected:
         SemaphoreHandle_t semaphore = NULL;

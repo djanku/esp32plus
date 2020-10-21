@@ -44,7 +44,7 @@ class I2CMaster {
 
         esp_err_t setup(gpio_num_t scl = SCL, gpio_num_t sda = SDA, 
                         i2c_port_t num = I2C_NUM_0, int freq = 100000);
-        esp_err_t finish();
+        esp_err_t shutdown();
 
 
         esp_err_t read_bit(uint8_t slave_addr, uint8_t slave_reg, uint8_t pos, bool *bit);
@@ -69,11 +69,18 @@ class I2CMaster {
     protected:
         i2c_config_t i2c_config;
         i2c_port_t i2c_num; 
-        bool setuped = false;
     private:
-        esp_err_t _select_register(uint8_t slave_addr, uint8_t slave_reg);
-
         Mutex mutex;
         friend class I2CMasterCommand;
 };
 
+
+class I2CMasterDriver {
+    public:
+        virtual bool begin_i2c(I2CMaster *master);
+        virtual bool begin_i2c(I2CMaster *master, uint8_t address);
+
+    protected:
+        I2CMaster *i2c;
+        uint8_t i2c_address;
+};

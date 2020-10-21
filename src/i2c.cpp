@@ -105,17 +105,11 @@ esp_err_t I2CMaster::setup(gpio_num_t scl, gpio_num_t sda, i2c_port_t num,
     esp_err_t ret = i2c_param_config(num, &i2c_config);
     if (ret != ESP_OK) 
         return ret;
-    ret = i2c_driver_install(num, I2C_MODE_MASTER, 0, 0, ESP_INTR_FLAG_LOWMED);
-    if (ret == ESP_OK)
-        setuped = true;
-    return ret;
+    return i2c_driver_install(num, I2C_MODE_MASTER, 0, 0, ESP_INTR_FLAG_LOWMED);
 }
 
 
-esp_err_t I2CMaster::finish() {
-    if (!setuped)
-        return ESP_OK;
-    setuped = false;
+esp_err_t I2CMaster::shutdown() {
     return i2c_driver_delete(i2c_num);
 }
 
