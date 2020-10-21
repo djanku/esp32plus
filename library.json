@@ -15,6 +15,6 @@
     ],
     "license": "MIT",
     "homepage": "https://github.com/djanku/esp32plus",
-    "plarforms": "espressif32",
-    "frameworks": "espressif32"
+    "platforms": "espressif32",
+    "frameworks": "espidf"
 }

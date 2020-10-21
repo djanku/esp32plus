@@ -1,3 +1,8 @@
 .DS_Store
 ._*
 .pio/
+.vscode/
+build/
+
+sdkconfig
+platformio.ini

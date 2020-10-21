@@ -2,21 +2,14 @@
 
 #pragma once
 
-
 #include "esp_err.h"
-#include "esp_pthread.h"
-#include "pthread.h"
 #include "driver/i2c.h"
 
-#include "tools.h"
+#include "esp32plus/semaphore.h"
 
 
 #define SDA GPIO_NUM_21
 #define SCL GPIO_NUM_22
-
-#define ADDR_READ(addr) (addr << 1 | I2C_MASTER_READ)
-#define ADDR_WRITE(addr) (addr << 1 | I2C_MASTER_WRITE)
-
 
 class I2CMaster;
 
@@ -54,17 +47,21 @@ class I2CMaster {
         esp_err_t finish();
 
 
+        esp_err_t read_bit(uint8_t slave_addr, uint8_t slave_reg, uint8_t pos, bool *bit);
+        esp_err_t read_bits(uint8_t slave_addr, uint8_t slave_reg,
+                            uint8_t pos_end, uint8_t pos_start, uint8_t *bits);
         esp_err_t read_byte(uint8_t slave_addr, uint8_t slave_reg, uint8_t *buffer);
         esp_err_t read_bytes(uint8_t slave_addr, uint8_t slave_reg, uint8_t *buffer, 
                              size_t data_len);
 
+        esp_err_t write_bit(uint8_t slave_addr, uint8_t slave_reg, uint8_t pos,
+                            bool value);
+        esp_err_t write_bits(uint8_t slave_addr, uint8_t slave_reg, 
+                             uint8_t pos_end, uint8_t pos_start, uint8_t value);
         esp_err_t write_byte(uint8_t slave_addr, uint8_t slave_reg, uint8_t data);
         esp_err_t write_bytes(uint8_t slave_addr, uint8_t slave_reg, uint8_t *data, 
                               size_t data_len);
-        esp_err_t write_bit(uint8_t slave_addr, uint8_t slave_reg, uint8_t pos,
-                            uint8_t value);
 
-        // esp_err_t write_bit()
 
         bool is_slave_present(uint8_t slave_addr);
 
@@ -79,5 +76,4 @@ class I2CMaster {
         Mutex mutex;
         friend class I2CMasterCommand;
 };
-
 
