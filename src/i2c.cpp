@@ -2,7 +2,6 @@
 
 #include "esp_log.h"
 
-#include "esp32plus/common.h"
 #include "esp32plus/semaphore.h"
 #include "esp32plus/i2c.h"
 #include "esp32plus/utils.h"
@@ -23,7 +22,7 @@ I2CMasterCommand::I2CMasterCommand(I2CMaster &master) : master(master) {
 
 I2CMasterCommand::~I2CMasterCommand() {
     ESP_LOGD(TAG, "I2C ~CMD");
-    if (err != ESP_OK) {
+    if (error != ESP_OK) {
         i2c_reset_rx_fifo(master.i2c_num);
         i2c_reset_tx_fifo(master.i2c_num);
     }
@@ -34,31 +33,31 @@ I2CMasterCommand::~I2CMasterCommand() {
 void I2CMasterCommand::reset() {
     i2c_cmd_link_delete(cmd);
     cmd = i2c_cmd_link_create();
-    if (err != ESP_OK) {
+    if (error != ESP_OK) {
         i2c_reset_rx_fifo(master.i2c_num);
         i2c_reset_tx_fifo(master.i2c_num);
     }
-    err = ESP_OK;
+    error = ESP_OK;
 }
 
 inline esp_err_t I2CMasterCommand::start() {
-    err |= i2c_master_start(cmd);
-    return err;
+    error = i2c_master_start(cmd);
+    return error;
 }
 
 inline esp_err_t I2CMasterCommand::stop() {
-    err |= i2c_master_stop(cmd);
-    return err;
+    error = i2c_master_stop(cmd);
+    return error;
 }
 
 esp_err_t I2CMasterCommand::begin(TickType_t ticks_to_wait) {
-    err |= i2c_master_cmd_begin(master.i2c_num, cmd, ticks_to_wait);
-    return err;
+    error = i2c_master_cmd_begin(master.i2c_num, cmd, ticks_to_wait);
+    return error;
 }
 
 esp_err_t I2CMasterCommand::write(uint8_t data, bool ack) {
-    err |= i2c_master_write_byte(cmd, data, ack);
-    return err;
+    error = i2c_master_write_byte(cmd, data, ack);
+    return error;
 }
 
 esp_err_t I2CMasterCommand::write(uint8_t *data, size_t data_len, bool ack) {
@@ -67,24 +66,23 @@ esp_err_t I2CMasterCommand::write(uint8_t *data, size_t data_len, bool ack) {
     if (data_len == 1) 
         return write(data[0], ack);
     
-    err |= i2c_master_write(cmd, data, data_len, ack);
-    return err;
+    error = i2c_master_write(cmd, data, data_len, ack);
+    return error;
 }
 
 esp_err_t I2CMasterCommand::read(uint8_t *buffer, size_t count, i2c_ack_type_t ack) {
     if (!count)
         return ESP_ERR_INVALID_ARG;
     if (count == 1) {
-        err |= i2c_master_read_byte(cmd, buffer, ack);
-        return err;
+        error = i2c_master_read_byte(cmd, buffer, ack);
+        return error;
     }
-    err |= i2c_master_read(cmd, buffer, count, ack);
-    return err;
+    error = i2c_master_read(cmd, buffer, count, ack);
+    return error;
 }
 
-
-esp_err_t I2CMasterCommand::status() const {
-    return err;
+inline esp_err_t I2CMasterCommand::last_error() const {
+    return error;
 }
 
 
@@ -126,6 +124,8 @@ esp_err_t I2CMaster::read_bytes(uint8_t slave_addr, uint8_t slave_reg,
     cmd.write(slave_reg);
     cmd.stop();
     cmd.begin(read_timeout);
+    if (cmd.last_error() != ESP_OK)
+        return cmd.last_error();
     cmd.reset();
 
     cmd.start();
@@ -139,7 +139,10 @@ esp_err_t I2CMaster::read_bytes(uint8_t slave_addr, uint8_t slave_reg,
 
 esp_err_t I2CMaster::read_bit(uint8_t slave_addr, uint8_t slave_reg, uint8_t pos, bool *bit) {
     uint8_t data;
-    read_byte(slave_addr, slave_reg, &data);
+    esp_err_t err;
+    err = read_byte(slave_addr, slave_reg, &data);
+    if (err != ESP_OK)
+        return err;
     *bit = get_bit(data, pos) ? true : false;
     return ESP_OK;
 }
@@ -147,7 +150,10 @@ esp_err_t I2CMaster::read_bit(uint8_t slave_addr, uint8_t slave_reg, uint8_t pos
 esp_err_t I2CMaster::read_bits(uint8_t slave_addr, uint8_t slave_reg,
                                uint8_t pos_end, uint8_t pos_start, uint8_t *bits) {
     uint8_t data;
-    read_byte(slave_addr, slave_reg, &data);
+    esp_err_t err;
+    err = read_byte(slave_addr, slave_reg, &data);
+    if (err != ESP_OK)
+        return err;
     *bits = get_bits(data, pos_end, pos_start);
     return ESP_OK;
 }
@@ -174,7 +180,10 @@ esp_err_t I2CMaster::write_byte(uint8_t slave_addr, uint8_t slave_reg, uint8_t d
 esp_err_t I2CMaster::write_bit(uint8_t slave_addr, uint8_t slave_reg, uint8_t pos, 
                                bool value) {
     uint8_t b;
-    read_byte(slave_addr, slave_reg, &b);
+    esp_err_t err;
+    err = read_byte(slave_addr, slave_reg, &b);
+    if (err != ESP_OK)
+        return err;
     b = set_bit(b, pos, value);
     return write_byte(slave_addr, slave_reg, b);
 }
@@ -183,7 +192,10 @@ esp_err_t I2CMaster::write_bit(uint8_t slave_addr, uint8_t slave_reg, uint8_t po
 esp_err_t I2CMaster::write_bits(uint8_t slave_addr, uint8_t slave_reg,
                                 uint8_t pos_end, uint8_t pos_start, uint8_t value) {
     uint8_t tmp;
-    read_byte(slave_addr, slave_reg, &tmp);
+    esp_err_t err;
+    err = read_byte(slave_addr, slave_reg, &tmp);
+    if (err != ESP_OK)
+        return err;
     tmp = set_bits(tmp, pos_end, pos_start, value);
     return write_byte(slave_addr, slave_reg, tmp);
 }
@@ -196,8 +208,6 @@ bool I2CMaster::is_slave_present(uint8_t slave_addr) {
     cmd.write(ADDR_WRITE(slave_addr));
     cmd.stop();
 
-    if (cmd.status() != ESP_OK)
-        return false;
-
     return cmd.begin(milis(25));
 }
+

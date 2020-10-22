@@ -1,5 +1,4 @@
 
-
 #pragma once
 
 #include "esp_err.h"
@@ -7,9 +6,10 @@
 
 #include "esp32plus/semaphore.h"
 
-
 #define SDA GPIO_NUM_21
 #define SCL GPIO_NUM_22
+
+#define ERR_CHECK 3
 
 class I2CMaster;
 
@@ -30,9 +30,9 @@ class I2CMasterCommand {
 
         esp_err_t begin(TickType_t ticks_to_wait = 0);
 
-        esp_err_t status() const;
+        inline esp_err_t last_error() const;
     private:
-        esp_err_t err = ESP_OK;
+        esp_err_t error = ESP_OK;
         i2c_cmd_handle_t cmd;
         I2CMaster &master;
 };
@@ -77,8 +77,7 @@ class I2CMaster {
 
 class I2CMasterDriver {
     public:
-        virtual bool begin_i2c(I2CMaster *master);
-        virtual bool begin_i2c(I2CMaster *master, uint8_t address);
+        virtual esp_err_t begin_i2c(I2CMaster *master, uint8_t address) = 0;
 
     protected:
         I2CMaster *i2c;
